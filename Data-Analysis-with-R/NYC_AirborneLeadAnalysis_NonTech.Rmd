@@ -1,0 +1,272 @@
+---
+title: "Does the Concentration of Airborne Lead Affect the Number of Complaints due to Lead in NYC?"
+author: "Matt Moocarme"
+date: "June 5, 2016"
+output: html_document
+---
+
+<!-- To do - 
+-test multivariate regression on the test dataset and get the rsquared value
+
+-->
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      warning = FALSE,
+                      cache = T,
+                      message = FALSE,
+                      comment = '',
+                      echo = F
+                      )
+```
+
+## Hypothesis
+
+My hypothesis is that when there are changes in the concentration of lead in the NYC air, there will also be correlated changes in the number of complaints due to lead in the NYC 311 complaints.
+
+### About the datasets
+
+The 311 dataset comes from the NYC open data website that can be found here: 'https://nycopendata.socrata.com/Social-Services/'. 
+The data on the air quality came from the EPA website here: 'https://www3.epa.gov/airdata/ad_data_daily.html'.
+
+
+```{r load_libraries, echo = FALSE}
+## Load in libraries
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(ggmap)
+library(stringr)
+library(lubridate)
+library(boot)
+library(glmnet)
+library(caret)
+library(zoo)
+```
+
+
+```{r read in data}
+
+## Read in data
+threeoneonedata <- read_csv('data/2015_311.csv')
+
+sel.Boroughs <- c('STATEN ISLAND', 'BROOKLYN', 'MANHATTAN')
+df_311 <- threeoneonedata %>% filter(Borough %in% sel.Boroughs) 
+df_311$Date <- as.Date(df_311$`Created Date`, format = '%m/%d/%Y ')
+```
+
+### Choosing complaints
+There are a number of different complaints in the NYC 311 dataset. I have chosen complaints that I think will show any direct correlation. Specifally I focus on complaints that could be due to lead contaminants in water, lead in paint, and lead in waste.
+```{r 311_data_tidy, echo = T}
+complaints <- c('Lead','Radioactive Material','Water Quality',
+                'Air Quality','Industrial Waste','Drinking Water',
+                'Water System','Drinking','PAINT/PLASTER',
+                'PLUMBING', 'General Construction/Plumbing')
+filtered_df <- df_311 %>% filter(`Complaint Type` %in% complaints) %>%
+  select(date_ = Date, `Complaint Type`, Longitude, Latitude)
+
+dim(filtered_df)
+```
+
+We can see that there is over 120,000 observations
+
+During other anlyses of the PM2.5, carbon monoxide, and ozone air quality datasets, the air quality index (AQI), was a good indicator for those variables.  
+```{r get_lead_data}
+df_pb <- read_csv('data/ad_viz_plotval_data_pb_2015.csv')
+df_pb$Date <- mdy(df_pb$Date)
+```
+
+If we look at the unique values we can see that they do not vary at all so would not be helpful in any analyses
+```{r uniqueAQI, echo = T}
+unique(df_pb$DAILY_AQI_VALUE)
+unique(df_pb$DAILY_OBS_COUNT)
+```
+```{r getUnits}
+# grab units
+pb.units  <- df_pb$UNITS[1]
+```
+
+In this case we will just use the concentraion of lead in the air as our independent variable.
+```{r meanPb}
+df_pb2 <- df_pb %>% select(date_ = Date, Pb.conc = `Daily Mean Pb Concentration`, SITE_LATITUDE, SITE_LONGITUDE)
+# Check for duplicates in dates
+```
+
+Next we will check for duplicates in the dates. Duplicates may occur from air quality measuremnts taken on the same day, from different measurement stations. We will take the mean of them all.
+```{r dupDates, echo= T}
+sum(duplicated(df_pb2$date_))
+df_pb3 <- df_pb2 %>% group_by(date_) %>% dplyr::summarise(Pb.conc = mean(Pb.conc))
+head(df_pb3)
+```
+
+There are indeed duplicates in the date, and moreover we can see data is taken every 6 days.
+
+We can plot the variation in lead concentration in $\frac{\mu g}{m^3}$ over time.
+
+```{r plotPb}
+pbconc.plot <- ggplot(data= df_pb3, aes(x = date_, y = Pb.conc)) + geom_line()
+pbconc.plot
+```
+
+We can plot the location of the measurement station in the NYC area, and that there is only one. Because of this we will only take data in the boroughs closest to the measurement station, Manhattan, Staten Island, and Brooklyn, as this will most closely represent the lead concentration from at the location of the complaints. Moreover we will only use the lead concentration from this measurement station.
+
+```{r mapLocations}
+map <- get_map(location = 'Staten Island', zoom= 10, maptype = 'watercolor',
+               source = 'google', color = 'color')
+map <- ggmap(map) + geom_point(data = df_pb2, na.rm = T,
+                               aes(x=df_pb2$SITE_LONGITUDE, y=df_pb2$SITE_LATITUDE), color= 'darkred', size = 3)
+map
+```
+
+We can also look at the location of the complaints in NYC. W can see that they are pretty spread out over the borouhs chosen and we cannot see any clear trend.
+
+```{r mapComplaints}
+map2 <- get_map(location = 'Staten Island', zoom= 10, maptype = 'watercolor',
+               source = 'google', color = 'color')
+map2 <- ggmap(map2) + geom_point(data = filtered_df, na.rm = T,
+                               aes(x=filtered_df$Longitude, y=filtered_df$Latitude), color= 'blue', size = 0.01)
+map2
+```
+
+Beacasue we only want to work with one table we will inner join the two tables.
+
+```{r joinTables}
+df_tot <- filtered_df %>% inner_join(df_pb3, by = 'date_')
+```
+
+```{r interpolate_NAs}
+# Interpolate NAs in pb conc
+df_tot$Pb.conc <- na.spline(df_tot$Pb.conc, along = index(df_tot$date_), na.rm = T)
+df_tot$Pb.conc[df_tot$Pb.conc<0] <- 0
+```
+
+We summarise the data via the complaint type because we want to see whether the complaints about 'Lead' are dependent on the air concentration of lead.
+
+```{r groupComplaints, echo = T}
+df_tot2 <- df_tot %>% dplyr::group_by(date_, `Complaint Type`) %>%
+  dplyr::mutate(total.counts = n()) %>% ungroup()
+```
+
+Before we do any statistics we split dataset into a testing and training dataset. To confirm any hypotheses we perform on the training set we also perform on the test dataset.
+
+```{r data_split, echo = TRUE}
+set.seed(3456)
+trainIndex <- createDataPartition(df_tot2$total.counts, p = .8, list = F)
+df_tot_train <- df_tot2[ trainIndex,]
+df_tot_test  <- df_tot2[-trainIndex,]
+```
+
+We also split the training dataset into those complaining due to 'Lead' complaints, and those otherwise.
+
+```{r leadnolead, echo = TRUE}
+df1_t <- df_tot_train %>%
+  filter(`Complaint Type` == 'Lead') %>%
+  select(total.counts, Pb.conc) %>%
+  na.omit()
+
+df2_t <- df_tot_test %>%
+  filter(`Complaint Type` != 'Lead')  %>%
+  select(total.counts, Pb.conc) %>%
+  na.omit()
+```
+
+We can now plot the two.
+
+```{r}
+ggplot(data = df1_t, aes(y = total.counts, x = Pb.conc)) +
+  geom_point() + stat_smooth(method = "lm") + ggtitle('Number of ``Lead`` complaints vs air concentration of lead')
+
+ggplot(data = df2_t, aes(y = total.counts, x = Pb.conc)) +
+  geom_point() + stat_smooth(method = "lm") + ggtitle('Number of other complaints vs air concentration of lead')
+```
+
+We can see that there is a postive correlation when the complaints are categorized due to 'Lead', for the other complaints there is a slight negative correlation. This may indicate that when the air concentration of lead is high there are more 'lead' complaints. 
+
+To test this hypothesis further we can perform a T-test.
+```{r ttest, echo = TRUE}
+t.test(x = df1_t$total.counts, y = df2_t$total.counts)
+```
+
+The T-test shows a p-value less than 0.05 so we determine that the trend is statistically significant.
+
+### Linear Regression
+
+#### Univariate Linear Regression
+We can try and fit the number of complaints using linear model with respect to the concentration of lead.
+```{r lmfit, echo = TRUE}
+FitLm <- lm(data = df_tot_train, total.counts ~ Pb.conc)
+summary(FitLm)
+```
+
+From the summary of the fit we can see that although the p-value is very small, indicating statistical significance, the $R^2$ value is very small, showing that it doesn't fit the data very well.
+Multivariate regression
+
+#### Multivariate Regression
+
+We can also produce more complicated models that depend on polynomial dependence of the concentration of lead, and also on the type of complaint.
+
+```{r mvregression, echo = TRUE}
+FitLm2_1 <- lm(data = df_tot_train, total.counts ~ poly(Pb.conc,2)*`Complaint Type`)
+summary(FitLm2_1)
+```
+
+We can see that there are many combinations of variables, with around 10 that are statistically significant. Aain we have a very small p-value, and we also get a much better $R^2$ value, showing a better fit on this training dataset.
+
+```{r}
+par(mfrow = c(2,2))
+plot(FitLm2_1)
+```
+
+This is probably not the best fit of the model since it is assuming normal distribution of the observations. From the plots provided by the fit we can see that this is inaccurate. This is shown in the Q-Q plot in which many of the points do not lie on the normal distribution line. Also the fit is not very good as a few of the points have very high leverage, i.e., small changes in the those points will change the fit dramatically.
+We cn also see that there are two clusters which may warrant further exploration if the model was sufficient otherwise.
+
+Though our $R^2$ value was much better this was most liely due to overfitting of the data.
+
+#### Elastic network
+
+A better model may be made using an eleastic network, which uses a combination of ridge regression and LASSO to produce a robust model, and less prone to overfitting.
+
+```{r enet, results='hide', echo = TRUE}
+mydv <- dummyVars(~ Pb.conc + `Complaint Type`, data = df_tot_train)
+data_cor_new_train <- data.frame(predict(mydv, df_tot_train))
+data_cor_new_test <- data.frame(predict(mydv, df_tot_test))
+enetGrid <- expand.grid(.alpha = seq(0, 1, 0.05), #Alpha between 0 (ridge) to 1 (lasso).
+                        .lambda = seq(0, 10, by = 1))
+ctrl <- trainControl(method = "cv", number = 10,
+                     verboseIter = T)
+set.seed(1)
+enetTune <- train(df_tot_train$total.counts ~ ., data = data_cor_new_train,   
+                  method = "glmnet", 
+                  tuneGrid = enetGrid,
+                  trControl = ctrl)
+plot(enetTune)
+plot(varImp(enetTune))
+```
+
+Here we can see that the most important variable is the concentration of airborne lead, adding weight to our hypothesis.
+
+We can test our model on the test dataset and calculate the root mean squared error (RMSE).
+```{r enetResults}
+test_data <- cbind(data_cor_new_test, df_tot_test$total.counts)
+names(test_data)[ncol(test_data)] <- "total.counts" 
+
+prediction <- predict(enetTune, test_data)
+RMSE(pred = prediction, obs = test_data$total.counts) 
+```
+
+We confirm the RMSE calculated on the test dataset is on the same order compared to the training dataset indicating a good model fit. 
+
+### Conclusion
+
+Overall we have found out that there is correlation between the concentration of airborne lead and the number of lead complaints in NYC, moreover the correlation is statistically significant. 
+We also have modelled the total number of complaints given the concentration of lead, and complaint type. We found that multivariate regression did not perform that great, though elastic networks performed much better in the prediction.
+
+
+
+
+
+
+
+
