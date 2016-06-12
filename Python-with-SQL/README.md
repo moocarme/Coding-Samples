@@ -12,3 +12,20 @@ This script goes through a given amount of the wikipedia links from the sqlite d
 The script also goes to the link associated with the category and continues, i.e. 'electromagnetism -> subfields of physics -> physics -> physical sciences -> natural sciences -> nature ...'
 
 The resulting network is then plotted and saved to a png.
+
+### Data Dictionary
+
+- *conn* - connection to sqlite database
+- *cur* - cursor to database
+- *startpage* - index of initial webpage to scrape (int)
+- *testpages* - number of webpages to scrape (int)
+- *G* - object representing network graph
+- *url* - URL of webpage currently being scraped (string)
+- *page* - object representing webpage
+- *tree* - object representing xml web tree
+- *categories* - list of categories
+- *newpage* - object representing another webpage  
+- *newtree* - object representing another xml webtree  
+- *t1* - returned link (string) from lookup function
+- *category_id* - integer id representing category from database
+- *pos* - networkx object repreenting current network graph
