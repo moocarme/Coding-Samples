@@ -137,7 +137,7 @@ for j in range(len(sortedMainChordProgDictKey[:noEntries])):
         newChordProg.append(sortedMainChordProgDictKey[j])
         newChordProgVals.append(sortedMainChordProgDictVal[j])
 
-# PLot in bar chart        
+# Plot in bar chart        
 plt.figure(4); plt.clf()
 res = 20
 plt.bar(range(len(newChordProgVals[:res])), newChordProgVals[:res], align='center')
