@@ -1,7 +1,14 @@
-# Data Analysis using R
+# Does the Concentration of Airborne Lead Affect the Number of Complaints due to Lead in NYC?
 
-This folder contains files written in R to analyse data from the EPA and NYC's 311 service to determine whether there is a correlation between the concentration of lead and the number of 'lead' complaints in NYC.
+## Where to find project 
+The project can be viewed on RPubs [here](http://rpubs.com/moocarme/Pb-R-Analysis), which is a published version of the html file included here.
 
-The R script goes includes all the technical details, whereas the html/R-markdown file is more for non-technical presentations.
+## Hypothesis
+My hypothesis is that when there are changes in the concentration of lead in the NYC air, there will also be correlated changes in the number of complaints due to lead in the NYC 311 complaints.
 
-The 311 complaint data for this script can be found [here](https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9), and the data quality data can be found [here](https://www3.epa.gov/airdata/ad_data_daily.html)
+### About the datasets
+The 311 data comes from the 311 service requests dataset from the NYC open data website that can be found
+[here](https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9), and the data on air concentration of lead can be found at the air quality dataset can be found on the EPA website  [here](https://www3.epa.gov/airdata/ad_data_daily.html).
+
+### Files
+The R script included is designed for a more technically proficient audience, whereas the R-marrkdow and html files are designed to accessible for less techinically proficent audiences. 
