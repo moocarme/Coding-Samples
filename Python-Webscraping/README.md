@@ -25,7 +25,7 @@ One Issue I cam across was that ultimate-guitar.com only allows 500 search resul
 Next it would insightful to look up find out why these same top 3, and top 8 chords are being used, as there may be an underlying trend I am unaware of. Also worth invetigating is whether the use of chords outside the top 8 are key in varying the characteristic sound that might explain why all country music sounds similar.
 This could be done with statistical analysis which would be the topic of further work. Also other features of the songs could be analysed separately using the echonest API, alternatively I could develop my own feature analyses using machine learning methods.
 
-### getChordsandPlot.py aData Dictionary
+### getChordsandPlot.py Data Dictionary
 
 - *webpage* - the url of the webpage being scraped (requests object)
 - *webtree* - the webtree of webpage url (lxml object)
