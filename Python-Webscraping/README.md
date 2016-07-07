@@ -1,4 +1,4 @@
-# Looking at Data-Mined Guitar Tablature to Investigate Why All Country Music Sounds Similar 
+# Why Does All Country Music Sound the Same 
 
 ### Hypothesis
 The motivation of this project is to try to understand why all country music sounds the same. I hypothesize that all country music sounds the same becasue many songs all use the same chord progession, whereas many other genres of music have a greater variation in the chord 
@@ -24,3 +24,12 @@ One Issue I cam across was that ultimate-guitar.com only allows 500 search resul
 
 Next it would insightful to look up find out why these same top 3, and top 8 chords are being used, as there may be an underlying trend I am unaware of. Also worth invetigating is whether the use of chords outside the top 8 are key in varying the characteristic sound that might explain why all country music sounds similar.
 This could be done with statistical analysis which would be the topic of further work. Also other features of the songs could be analysed separately using the echonest API, alternatively I could develop my own feature analyses using machine learning methods.
+
+### getChordsandPlot.py aData Dictionary
+
+- *webpage* - the url of the webpage being scraped (requests object)
+- *webtree* - the webtree of webpage url (lxml object)
+- *tabXpath* - xml path to the content of the webpage containing the guitar tablature (str)
+- *tab* - the content that contains the guita tablature (str)
+- *tabContentClass* - iterable that contains all the 'js-tab-content' content (lxml object)
+- *chordsList* - list of all chords in the webpage
