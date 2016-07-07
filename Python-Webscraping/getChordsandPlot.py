@@ -28,7 +28,7 @@ def getChords(url):
     webTree= html.fromstring(webPage.content)
     tabContentClass = webTree.find_class('js-tab-content')
     chordsList = list(tabContentClass[0].iter('span')) # starts at element 0
-    return [tostring(chordsList[i], with_tail = False).strip('</span>') for i in range(len(chordsList))]
+    return [tostring(chord, with_tail = False).strip('</span>') for chord in chordsList]
 
 # = Function to get xml tree given the band name
 def getBandTree(band, page):
