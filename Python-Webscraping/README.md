@@ -1,4 +1,4 @@
-# Why Does All Country Music Sound the Same 
+# Why Does All Country Music Sound the Same?
 
 ### Hypothesis
 The motivation of this project is to try to understand why all country music sounds the same. I hypothesize that all country music sounds the same becasue many songs all use the same chord progession, whereas many other genres of music have a greater variation in the chord 
