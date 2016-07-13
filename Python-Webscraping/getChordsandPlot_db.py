@@ -89,6 +89,11 @@ def getChordProg(chordList, progLen = 4):
     return chordProg
     
 def getGenreDict():
+    '''
+    Function to get all the genres and output to a dict of dicts where the keys 
+    to the outer dict is the main genre the values are dicts, with the inner
+    values being the sub genre
+    '''
     url = 'https://www.ultimate-guitar.com/advanced_search.html'
     pageUrl = requests.get(url)
     webTree = html.fromstring(pageUrl.content)
@@ -112,6 +117,7 @@ def getGenreDict():
     return GenreDict
 # ============================================================================
 
+# = Set up SQL 
 conn = sqlite3.connect('chordProgdb2.sqlite')
 cur = conn.cursor()
 cur.executescript('''
@@ -153,10 +159,12 @@ CREATE TABLE Song (
 */
 ''')
 
+# ============================================================================
 
 allGenresDict = getGenreDict()
 #to find all genres: allGenresDict.keys()
-mainGenre = 'Country'
+
+mainGenre = 'Alternative'
 genresDict = allGenresDict[mainGenre]
 
 cur.execute('''INSERT OR IGNORE INTO Genre (name) 
@@ -167,13 +175,14 @@ main_genre_id = cur.fetchone()[0]
 page = '1' # start at page 1, in str format as will be added to html str
 
 for genre, genrekey in genresDict.iteritems():
-    
     # = Get xml tree for first page
     tree1 = getGenreTree(genrekey, page)
     pages = tree1.find_class('paging')
-    maxPage = len(list(pages[0].iter('a'))) # see what the max number of pages is
-    print('Max Page: '+ str(maxPage))
-    
+    try: 
+        maxPage = len(list(pages[0].iter('a'))) # see what the max number of pages is
+        print('Max Page: '+ str(maxPage))
+    except IndexError:
+        break
     # = Grab song links on the first page
     songs = tree1.find_class('song result-link')
     songLinks = []
