@@ -161,69 +161,72 @@ CREATE TABLE Song (
 
 # ============================================================================
 
-allGenresDict = getGenreDict()
-#to find all genres: allGenresDict.keys()
 
-mainGenre = 'Alternative'
-genresDict = allGenresDict[mainGenre]
-
-cur.execute('''INSERT OR IGNORE INTO Genre (name) 
-    VALUES ( ? )''', (mainGenre, ) )
-cur.execute('SELECT id FROM Genre WHERE name = ? ', (mainGenre, ))
-main_genre_id = cur.fetchone()[0]   
-
-page = '1' # start at page 1, in str format as will be added to html str
-
-for genre, genrekey in genresDict.iteritems():
-    # = Get xml tree for first page
-    tree1 = getGenreTree(genrekey, page)
-    pages = tree1.find_class('paging')
-    try: 
-        maxPage = len(list(pages[0].iter('a'))) # see what the max number of pages is
-        print('Max Page: '+ str(maxPage))
-    except IndexError:
-        break
-    # = Grab song links on the first page
-    songs = tree1.find_class('song result-link')
-    songLinks = []
-    for i in songs:
-        songLinks.append(i.get('href'))        
+def main():
+    allGenresDict = getGenreDict()
+    #to find all genres: allGenresDict.keys()
     
-    # = Iterate through the remaining pages and add song links
-    for i in range(maxPage -1):
-        looppage = i + 2
-        looptree = getGenreTree(genrekey, str(looppage))
-        loopsongs = looptree.find_class('song result-link')
-        for song in loopsongs:
-            songLinks.append(song.get('href'))
-    
-    print('No of tabs: ' + str(len(songLinks)))
+    mainGenre = 'Alternative'
+    genresDict = allGenresDict[mainGenre]
     
     cur.execute('''INSERT OR IGNORE INTO Genre (name) 
-        VALUES ( ? )''', (genre, ) )
-    cur.execute('SELECT id FROM Genre WHERE name = ? ', (genre, ))
-    subgenre_id = cur.fetchone()[0]
-         
+        VALUES ( ? )''', (mainGenre, ) )
+    cur.execute('SELECT id FROM Genre WHERE name = ? ', (mainGenre, ))
+    main_genre_id = cur.fetchone()[0]   
     
-    progLen = 4
-    for i in songLinks:
-        Artist, Song, Chords = getChordsArtistTrack(i)
-        chordProg = getChordProg(Chords)
-        
-        cur.execute('''INSERT OR IGNORE INTO Artist (name) 
-            VALUES ( ? )''', ( Artist, ) )
-        cur.execute('SELECT id FROM Artist WHERE name = ? ', (Artist, ))
-        artist_id = cur.fetchone()[0]    
-        
-        cur.execute('''INSERT OR IGNORE INTO ChordProg (prog) 
-            VALUES ( ? )''', (chordProg, ) )
-        cur.execute('SELECT id FROM ChordProg WHERE prog = ? ', (chordProg, ))
-        chordProg_id = cur.fetchone()[0]
-        
-        cur.execute('''INSERT OR REPLACE INTO Song
-            (title, artist_id, genre_id, subgenre_id, chordProg_id) 
-            VALUES ( ?, ?, ?, ?, ? )''', 
-            ( Song, artist_id, main_genre_id, subgenre_id, chordProg_id, ) )
-        conn.commit()
+    page = '1' # start at page 1, in str format as will be added to html str
     
-
+    for genre, genrekey in genresDict.iteritems():
+        # = Get xml tree for first page
+        tree1 = getGenreTree(genrekey, page)
+        pages = tree1.find_class('paging')
+        try: 
+            maxPage = len(list(pages[0].iter('a'))) # see what the max number of pages is
+            print('Max Page: '+ str(maxPage))
+        except IndexError:
+            break
+        # = Grab song links on the first page
+        songs = tree1.find_class('song result-link')
+        songLinks = []
+        for i in songs:
+            songLinks.append(i.get('href'))        
+        
+        # = Iterate through the remaining pages and add song links
+        for i in range(maxPage -1):
+            looppage = i + 2
+            looptree = getGenreTree(genrekey, str(looppage))
+            loopsongs = looptree.find_class('song result-link')
+            for song in loopsongs:
+                songLinks.append(song.get('href'))
+        
+        print('No of tabs: ' + str(len(songLinks)))
+        
+        cur.execute('''INSERT OR IGNORE INTO Genre (name) 
+            VALUES ( ? )''', (genre, ) )
+        cur.execute('SELECT id FROM Genre WHERE name = ? ', (genre, ))
+        subgenre_id = cur.fetchone()[0]
+             
+        
+        progLen = 4
+        for i in songLinks:
+            Artist, Song, Chords = getChordsArtistTrack(i)
+            chordProg = getChordProg(Chords, progLen)
+            
+            cur.execute('''INSERT OR IGNORE INTO Artist (name) 
+                VALUES ( ? )''', ( Artist, ) )
+            cur.execute('SELECT id FROM Artist WHERE name = ? ', (Artist, ))
+            artist_id = cur.fetchone()[0]    
+            
+            cur.execute('''INSERT OR IGNORE INTO ChordProg (prog) 
+                VALUES ( ? )''', (chordProg, ) )
+            cur.execute('SELECT id FROM ChordProg WHERE prog = ? ', (chordProg, ))
+            chordProg_id = cur.fetchone()[0]
+            
+            cur.execute('''INSERT OR REPLACE INTO Song
+                (title, artist_id, genre_id, subgenre_id, chordProg_id) 
+                VALUES ( ?, ?, ?, ?, ? )''', 
+                ( Song, artist_id, main_genre_id, subgenre_id, chordProg_id, ) )
+            conn.commit()
+        
+if __name__=='__main__':
+    main()    
