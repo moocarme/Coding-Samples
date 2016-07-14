@@ -2,7 +2,7 @@
 
 ## Where to find project
 The tableau workbook can be found [here] (https://public.tableau.com/profile/matthew.moocarme#!/vizhome/MotorCollisionsWorkbork_7Apr16/Story1) on Tableau Public.
-The embedded dashboard is also on my website, with a more detailed analysis in R, which can be found [here](https://moocarme.github.io/Vision-Zero/)
+The embedded dashboard is also on my website, with a more detailed analysis in R, which can be found [here](https://moocarme.github.io/Vision-Zero/).
 
 ##Data source
 The data used is from the NYPD motor vehicle collisions dataset available on NYC open data [here] (https://data.cityofnewyork.us/Public-Safety/NYPD-Motor-Vehicle-Collisions/h9gi-nx95).
