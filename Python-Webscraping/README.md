@@ -38,7 +38,7 @@ This could be done with statistical analysis which would be the topic of further
 - *songLinks* - cleaned up list of song links (list)
 - *looppage* - current page scraping (int)
 - *looptree* - the webtree of current webpage url being scraped (lxml object)
-- *loopsongs* - list of songs from the current webpae being scraped
+- *loopsongs* - list of songs from the current webpae being scraped (list)
 - *webpage* - the url of the webpage being scraped (requests object)
 - *tree1* - the webtree of webpage url (lxml object)
 - *progLen* - length of chord progression (int)
@@ -49,4 +49,18 @@ This could be done with statistical analysis which would be the topic of further
 - *tabXpath* - xml path to the content of the webpage containing the guitar tablature (str)
 - *tab* - the content that contains the guita tablature (str)
 - *tabContentClass* - iterable that contains all the 'js-tab-content' content (lxml object)
-- *chordsList* - list of all chords in the webpage
+- *chordsList* - list of all chords in the webpage (list)
+
+### lyricScraper.py Data Dictionary
+- *baseurl* - open url of website to scrape (urllib object)
+- *artistAlphaLinks* - list of urls of webpages containing artists with given first letter (list)
+- *artistLinks* - list of urls of webpages of individual artists (list)
+- *newurl* - open url of webpage (urlobject)
+- *songLinks* - list of urls of webpages of individual songs (list)
+- *newArtisturl* - open url of webpage (urlobject)
+- *songLyrics* - list containing all song lyrics (list)
+- *songSoup* - beautiful soup object of the webpage url (beautiful soup object)
+- *songData* - all text from the webpage (str)
+- *songResult* - filtered text data fro the webpage (str)
+
+
