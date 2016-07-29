@@ -15,12 +15,32 @@ import numpy as np
 # = Helper Functions =========================================================
 
 def WeightedPick(d):
+    '''
+    Chooses next word dependent on the number of occurences, such that more 
+    frequent words will get chose more often
+    '''
     r = random.uniform(0, sum(d.values()))
     s = 0.0
     for k, w in d.iteritems():
         s += w
         if r < s: return k
     return k
+
+def createVerse(mydict, verseLen, lyricLen):
+    '''
+    Creates string object of a typical verse or chorus dependent on the number 
+    of words in a line, and number of lines in a verse/chorus given the 
+    dictionary of possible words and the possible following words, with their
+    ocuurences
+    '''
+    robo_lyric = [random.choice(mydict.keys())] # initiliaxe with random word
+    for j in range(verseLen):
+        for i in range(lyricLen):
+            robo_lyric.append(WeightedPick(lyricDict[robo_lyric[-1]]))
+    
+    for i in range(verseLen):
+        robo_lyric.insert((i+1)*lyricLen+i,'\n')  
+    return(' '.join(robo_lyric))
 
 # =============================================================================
 
@@ -71,16 +91,6 @@ for song in songLyrics:
         except KeyError: # if key doesnt exist
             lyricDict.setdefault(song[word], {})[song[word+1]] = 1
 
-
-def createVerse(mydict, verseLen, lyricLen):
-    robo_lyric = [random.choice(mydict.keys())] # initiliaxe with random word
-    for j in range(verseLen):
-        for i in range(lyricLen):
-            robo_lyric.append(WeightedPick(lyricDict[robo_lyric[-1]]))
-    
-    for i in range(verseLen):
-        robo_lyric.insert((i+1)*lyricLen+i,'\n')  
-    return(' '.join(robo_lyric))
 
 lyricLen = 10 # length of lyric
 chorusLen = 4    
