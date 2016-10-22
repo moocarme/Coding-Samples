@@ -118,10 +118,12 @@ class lyric_analysis(object):
         
 # ==============================================================================
         
-# = grab from pickle file
-songLyrics = pickle.load(open("songLyrics.p", "rb"))
-analysis = lyric_analysis(songLyrics)
-analysis.create_dict()
-analysis.plot_word_freq(resolution = 40)
-analysis.lyric_model()
-analysis.generate_lyrics(lyric_len = 10, chorus_len = 4)
+if __name__=="__main__":
+    # = grab from pickle file
+    songLyrics = pickle.load(open("songLyrics.p", "rb"))
+    analysis = lyric_analysis(songLyrics) # initialise
+    analysis.create_dict()                # create dictionary of words removing stop words
+    analysis.plot_word_freq(resolution = 40) # plot most frequent words
+    analysis.plot_cumulative_distribution()  # plot cumulative distribution
+    analysis.lyric_model()                   # create dictionary of lyrics and following words
+    analysis.generate_lyrics(lyric_len = 10, chorus_len = 4) # make a song
