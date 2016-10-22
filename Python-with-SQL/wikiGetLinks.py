@@ -88,10 +88,11 @@ class wikipedia_scraper(object):
         self.cur.close()
         self.conn.close()
 
-pages = 200 # get all links from this number of pages
-# Initialise at the main page since it changes everyday
-init_url = 'https://en.wikipedia.org/wiki/Main_Page'
-
-scraper = wikipedia_scraper(init_url, pages, 'wikiLinks-test.sqlite')
-scraper.scrape()
-scraper.close_connections()
+if __name__ == "__main__":
+    pages = 200 # get all links from this number of pages
+    # Initialise at the main page since it changes everyday
+    init_url = 'https://en.wikipedia.org/wiki/Main_Page'
+    
+    scraper = wikipedia_scraper(init_url, pages, 'wikiLinks-test.sqlite')
+    scraper.scrape()
+    scraper.close_connections()
