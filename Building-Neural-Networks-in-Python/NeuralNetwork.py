@@ -5,9 +5,12 @@ Created on Sun May  1 17:01:32 2016
 @author: matt
 """
 
+# Load in libraries
 import numpy as np
 from scipy import optimize
 from scipy.io import loadmat
+
+# Helper functions ===========================================================
 
 def train_test_split(X, y, test_size = 0.3, seed = 666):
     '''
@@ -157,7 +160,7 @@ class NNet(object):
             
             Delta2 += np.dot(d3[np.newaxis].T, a2[np.newaxis])
             Delta1 += np.dot(d2[np.newaxis].T, a1[np.newaxis])
-    #    print(Delta1)    
+        
         Theta1_grad = (1.0 / m) * Delta1
         Theta2_grad = (1.0 / m) * Delta2
         
