@@ -10,66 +10,85 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import time
 
-# Start timer
-start_time = time.time()
 
-# Load in csv file
-city_data_py = pd.read_csv('data/GlobalLandTemperaturesByCity.csv') 
+class analyse_temp_data(object):
+    
+    def __init__(self, filename):
+        self.dataset = pd.read_csv(filename) # Load in csv file
 
-# Filter for city equal to 'New York'
-city_data_US_py = city_data_py[city_data_py['City'] == 'New York']
+    def clean_data(self):
+        
+        # Filter for city equal to 'New York' and country equal to 'United States' 
+        city_data_US_py = self.dataset[(self.dataset['City'] == 'New York') & 
+                                       (self.dataset['Country'] == 'United States')]
 
-# Filter for country equal to 'United States' 
-city_data_US_py = city_data_US_py[city_data_US_py['Country'] == 'United States']  
+        # Select only 'datetime' and 'AverageTemperature' columns
+        city_data_US_py = city_data_US_py[['dt', 'AverageTemperature']]
 
-# Select only 'datetime' and 'AverageTemperature' columns
-city_data_US_py = city_data_US_py [['dt', 'AverageTemperature']]
+        # Remove NaN values
+        city_data_US_py = city_data_US_py[city_data_US_py['AverageTemperature'].notnull()]
 
-# Remove NaN values
-city_data_US_py = city_data_US_py[city_data_US_py['AverageTemperature'].notnull()]
+        # Convert datetime column to a pandas datetime series object 
+        city_data_US_py['dt'] = pd.Series(pd.to_datetime(city_data_US_py['dt']))
+        
+        # Make new column as the year of the dt column
+        city_data_US_py['year'] = city_data_US_py['dt'].dt.year
+        
+        # Group by year and take the mean
+        self.AvgTemp_US_py = city_data_US_py.groupby('year').mean()
 
-# Convert datetime column to a pandas datetime series object 
-city_data_US_py['dt'] = pd.Series(pd.to_datetime(city_data_US_py['dt']))
+        # Create new column of the year
+        self.AvgTemp_US_py.index.name = 'Year'
+        self.AvgTemp_US_py.reset_index(inplace=True)
+        
+    def regress(self):
+        '''
+        Use scipy lingress function to perform linear regression      
+        ''' 
+        slope, intercept, r_val, p_val, std_err = stats.linregress(self.AvgTemp_US_py['Year'], \
+                                                                       self.AvgTemp_US_py['AverageTemperature'])
 
-# Make new column as the year of the dt column
-city_data_US_py['year'] = city_data_US_py['dt'].dt.year
+        # Create regression line
+        self.regressLine = intercept + self.AvgTemp_US_py['Year']*slope
+        
+        # Regression using Theil-Sen with 95% confidence intervals 
+        self.res = stats.theilslopes(self.AvgTemp_US_py['AverageTemperature'], self.AvgTemp_US_py['Year'], 0.95)
 
-# Group by year and take the mean
-AvgTemp_US_py = city_data_US_py.groupby('year').mean()
+        
+    def plot(self):
+        '''
+        Plot the data plus regression line
+        '''
+        # Scatter plot the temperature
+        plt.figure()
+        plt.scatter(self.AvgTemp_US_py['Year'], self.AvgTemp_US_py['AverageTemperature'], 
+                    s = 3, label = 'Average Teamperature')
+        
+        # Add least squares regression line
+        plt.plot(self.AvgTemp_US_py['Year'], self.regressLine, label = 'Least squares regression line'); 
+        
+        # Add Theil-Sen regression line
+        plt.plot(self.AvgTemp_US_py['Year'], self.res[1] + self.res[0] * self.AvgTemp_US_py['Year'], 
+                 'r-', label = 'Theil-Sen regression line')
+        
+        # Add Theil-Sen confidence intervals
+        plt.plot(self.AvgTemp_US_py['Year'], self.res[1] + self.res[2] * self.AvgTemp_US_py['Year'], 
+                 'r--', label = 'Theil-Sen 95% confidence degree')
+        plt.plot(self.AvgTemp_US_py['Year'], self.res[1] + self.res[3] * self.AvgTemp_US_py['Year'], 
+                 'r--')
+        
+        # Add legend, axis limits and save to png
+        plt.legend(loc = 'upper left')
+        plt.ylim(7,14); plt.xlim(1755, 2016)
+        plt.savefig('pythonRegression.png')
 
-# Create new column of the year
-AvgTemp_US_py.index.name = 'Year'
-AvgTemp_US_py.reset_index(inplace=True)
 
-# Use scipy lingress function to perform linear regression
-slope, intercept, r_value, p_value, std_err = stats.linregress(AvgTemp_US_py['Year'], \
-    AvgTemp_US_py['AverageTemperature'])
-
-# Create regression line
-regressLine = intercept + AvgTemp_US_py['Year']*slope
-
-# Regression using Theil-Sen with 95% confidence intervals 
-res = stats.theilslopes(AvgTemp_US_py['AverageTemperature'], AvgTemp_US_py['Year'], 0.95)
-
-# Scatter plot the temperature
-plt.clf()
-plt.scatter(AvgTemp_US_py['Year'], AvgTemp_US_py['AverageTemperature'], s = 3, label = 'Average Teamperature')
-
-# Add least squares regression line
-plt.plot(AvgTemp_US_py['Year'], regressLine, label = 'Least squares regression line'); 
-
-# Add Theil-Sen regression line
-plt.plot(AvgTemp_US_py['Year'], res[1] + res[0] * AvgTemp_US_py['Year'], 'r-', label = 'Theil-Sen regression line')
-
-# Add Theil-Sen confidence intervals
-plt.plot(AvgTemp_US_py['Year'], res[1] + res[2] * AvgTemp_US_py['Year'], 'r--', label = 'Theil-Sen 95% confidence interval')
-plt.plot(AvgTemp_US_py['Year'], res[1] + res[3] * AvgTemp_US_py['Year'], 'r--')
-
-# Add legend, axis limits and save to png
-plt.legend(loc = 'upper left')
-plt.ylim(7,14); plt.xlim(1755, 2016)
-plt.savefig('pythonRegress.png')
-
-# End timer
-end_time = time.time()
-print('Elapsed time = ' + str(end_time - start_time) + 'seconds')
+if __name__ == '__main__':
+    start_time = time.time() # Start timer
+    filename = 'data/GlobalLandTemperaturesByCity.csv'
+    
+    data_analysis = analyse_temp_data(filename) # initialize with file
+    data_analysis.clean_data()                  # clean, filter, and aggregate
+    data_analysis.regress()                     # linear regression with bands
+    data_analysis.plot()                        # plot
+    print 'Elapsed time = %.2f seconds' % (time.time() - start_time)
