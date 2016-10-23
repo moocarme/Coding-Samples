@@ -244,24 +244,24 @@ class NNet(object):
 
 # ============================================================================    
 
-
-# load data
-data = loadmat('digit_data.mat')
-X, y = data['X'], data['y']
-y = y.reshape(X.shape[0], )
-y = y - 1  # convert to 0-9
-
-num_labels = len(set(y))      # number of outputs
-reg_lambda = 3.0              # regularization parameter
-input_layer_size = X.shape[1] # Number of input (features)
-
-# Generate train and test datasets with 70/30 split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3)
-
-# Initialise model
-nnet = NNet(reg_lambda = 3.0, epsilon_init = 0.12, hidden_layer_size = 25, 
-            opti_method = 'TNC', maxiter = 500)
-nnet.checkNNgradients()           # check gradients
-nnet.fit(X_train, y_train)        # fit model
-prediction = nnet.predict(X_test) # predict on tst set
-accuracy(prediction, y_test)      # return accuracy
+if __name__ == "__main__":
+    # load data
+    data = loadmat('digit_data.mat')
+    X, y = data['X'], data['y']
+    y = y.reshape(X.shape[0], )
+    y = y - 1  # convert to 0-9
+    
+    num_labels = len(set(y))      # number of outputs
+    reg_lambda = 3.0              # regularization parameter
+    input_layer_size = X.shape[1] # Number of input (features)
+    
+    # Generate train and test datasets with 70/30 split
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3)
+    
+    # Initialise model
+    nnet = NNet(reg_lambda = 3.0, epsilon_init = 0.12, hidden_layer_size = 25, 
+                opti_method = 'TNC', maxiter = 500)
+    nnet.checkNNgradients()           # check gradients
+    nnet.fit(X_train, y_train)        # fit model
+    prediction = nnet.predict(X_test) # predict on tst set
+    accuracy(prediction, y_test)      # return accuracy
